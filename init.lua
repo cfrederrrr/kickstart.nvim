@@ -26,6 +26,7 @@ vim.opt.softtabstop = -1
 vim.opt.encoding = 'UTF-8'
 vim.opt.fileformat = 'unix'
 vim.api.nvim_create_user_command('ConfigureVim', 'exe "edit ".stdpath("config")."/init.lua"', {})
+vim.api.nvim_create_user_command('ZlsConfig', 'exe "edit C:/Users/galve/AppData/Local/zls.json"', {})
 
 vim.api.nvim_create_augroup('setIndent', { clear = true })
 vim.api.nvim_create_autocmd('Filetype', {
@@ -145,7 +146,9 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- [[ Install `lazy.nvim` plugin manager ]]
 --    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
-if not vim.uv.fs_stat(lazypath) then
+-- if not vim.uv.fs_stat(lazypath) then
+-- if not false then
+if not true then
   local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
   local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   if vim.v.shell_error ~= 0 then
@@ -713,6 +716,12 @@ require('lazy').setup({
     'projekt0n/github-nvim-theme',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
+      require("github-theme").setup({
+        options = {
+          transparent = true,
+        }
+      })
+
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
