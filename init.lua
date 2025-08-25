@@ -5,7 +5,7 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -26,7 +26,7 @@ vim.opt.softtabstop = -1
 vim.opt.encoding = 'UTF-8'
 vim.opt.fileformat = 'unix'
 vim.api.nvim_create_user_command('ConfigureVim', 'exe "edit ".stdpath("config")."/init.lua"', {})
-vim.api.nvim_create_user_command('ZlsConfig', 'exe "edit C:/Users/galve/AppData/Local/zls.json"', {})
+vim.api.nvim_create_user_command('ZlsConfig', 'exe "edit ".stdpath("")', {})
 
 vim.api.nvim_create_augroup('setIndent', { clear = true })
 vim.api.nvim_create_autocmd('Filetype', {
@@ -48,7 +48,7 @@ vim.api.nvim_create_autocmd('Filetype', {
 })
 
 -- Disable zig auto format
-vim.g.zig_fmt_autosave = 0
+vim.g.zig_fmt_autosave = 1
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -139,6 +139,9 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+
+-- ctrl+, to open neovim config (this file)
+vim.keymap.set('n', '<leader>,', '<cmd>exe "edit ".stdpath("config")."/init.lua"<CR>')
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -560,6 +563,8 @@ require('lazy').setup({
             map('<leader>th', function()
               vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled { bufnr = event.buf })
             end, '[T]oggle Inlay [H]ints')
+
+            vim.lsp.inlay_hint.enable(false)
           end
         end,
       })
@@ -610,7 +615,7 @@ require('lazy').setup({
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
         -- clangd = {},
-        -- gopls = {},
+        gopls = {},
         -- pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
@@ -637,6 +642,8 @@ require('lazy').setup({
           },
         },
         zls = {
+          cmd = { '/home/dusty/.zvm/bin/zls' },
+          filetypes = { 'zig', 'zir', 'zon' },
           settings = {
             enable_argument_placeholders = false,
           },
@@ -659,11 +666,13 @@ require('lazy').setup({
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
+        'codelldb',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
         ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+        automatic_enable = true,
         automatic_installation = false,
         handlers = {
           function(server_name)
@@ -779,6 +788,11 @@ require('lazy').setup({
         --
         -- See :h blink-cmp-config-keymap for defining your own keymap
         preset = 'default',
+        ['<Tab>'] = { 'select_next', 'fallback' },
+        ['<S-Tab>'] = { 'select_prev', 'fallback' },
+        ['<Enter>'] = { 'accept', 'fallback' },
+        ['<C-n>'] = { 'snippet_forward', 'fallback' },
+        ['<C-p>'] = { 'snippet_backward', 'fallback' },
 
         -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
         --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -794,6 +808,7 @@ require('lazy').setup({
         -- By default, you may press `<c-space>` to show the documentation.
         -- Optionally, set `auto_show = true` to show the documentation after a delay.
         documentation = { auto_show = false, auto_show_delay_ms = 500 },
+        list = { selection = { preselect = false, auto_insert = true } },
       },
 
       sources = {
@@ -890,7 +905,7 @@ require('lazy').setup({
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
-      ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'zig' },
+      ensure_installed = { 'bash', 'c', 'diff', 'go', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc', 'zig' },
       -- Autoinstall languages that are not installed
       auto_install = true,
       highlight = {
@@ -946,6 +961,61 @@ require('lazy').setup({
   },
   {
     'ziglang/zig.vim',
+  },
+  {
+    'ray-x/go.nvim',
+    dependencies = { -- optional packages
+      'ray-x/guihua.lua',
+      'neovim/nvim-lspconfig',
+      'nvim-treesitter/nvim-treesitter',
+    },
+    config = function()
+      require('go').setup()
+    end,
+    event = { 'CmdlineEnter' },
+    ft = { 'go', 'gomod' },
+    build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
+  },
+  {
+    'hedyhli/outline.nvim',
+    config = function()
+      -- Example mapping to toggle outline
+      vim.keymap.set('n', '<leader>o', '<cmd>Outline<CR>', { desc = 'Toggle Outline' })
+
+      require('outline').setup {
+        -- Your setup opts here (leave empty to use defaults)
+        outline_window = {},
+        symbols = {
+          icons = {
+            Function = { icon = '󰘧' },
+            Constant = { icon = '󰏿' },
+            Variable = { icon = '' },
+            Class = { icon = '󰜂' },
+            Struct = { icon = '󰜂', hl = 'Structure' },
+          },
+        },
+      }
+    end,
+  },
+  {
+    'kdheepak/lazygit.nvim',
+    lazy = true,
+    cmd = {
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
+    },
+    -- optional for floating window border decoration
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+    },
+    -- setting the keybinding for LazyGit with 'keys' is recommended in
+    -- order to load the plugin when the command is run for the first time
+    keys = {
+      { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
+    },
   },
 }, {
   ui = {
