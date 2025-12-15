@@ -1,3 +1,6 @@
 return {
-  { 'ziglang/zig.vim' },
+  {
+    'ziglang/zig.vim',
+    priority = 1
+  },
 }
