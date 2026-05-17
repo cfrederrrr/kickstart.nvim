@@ -128,6 +128,9 @@ return {
           --
           -- When you move your cursor, the highlights will be cleared (the second autocommand).
           local client = vim.lsp.get_client_by_id(event.data.client_id)
+          if client and client.name == 'zls' then
+            vim.lsp.semantic_tokens.stop(event.buf, client.id)
+          end
           if client and client_supports_method(client, vim.lsp.protocol.Methods.textDocument_documentHighlight, event.buf) then
             local highlight_augroup = vim.api.nvim_create_augroup('kickstart-lsp-highlight', { clear = false })
             vim.api.nvim_create_autocmd({ 'CursorHold', 'CursorHoldI' }, {
@@ -212,7 +215,6 @@ return {
       local servers = {
         -- clangd = {},
         gopls = {},
-        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -237,6 +239,8 @@ return {
             },
           },
         },
+        pyright = {},
+        terraformls = {},
         zls = {
           cmd = { '/home/dusty/.zvm/bin/zls' },
           filetypes = { 'zig', 'zir', 'zon' },
@@ -263,6 +267,8 @@ return {
       vim.list_extend(ensure_installed, {
         'stylua', -- Used to format Lua code
         'codelldb',
+        'black',
+        'isort',
       })
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
